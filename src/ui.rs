@@ -350,8 +350,12 @@ impl<T> Snarl<T> {
                 let mut wire_hit = false;
 
                 for wire in self.wires.iter() {
-                    let (from, color_from) = output_info[&wire.out_pin];
-                    let (to, color_to) = input_info[&wire.in_pin];
+                    let Some(&(from, color_from)) = output_info.get(&wire.out_pin) else {
+                        continue;
+                    };
+                    let Some(&(to, color_to)) = input_info.get(&wire.in_pin) else {
+                        continue;
+                    };
 
                     if !wire_hit
                         && !snarl_state.has_new_wires()
@@ -602,11 +606,19 @@ impl<T> Snarl<T> {
     where
         V: SnarlViewer<T>,
     {
-        let Node {
+        let Some(&Node {
             pos,
             open,
             ref value,
-        } = self.nodes[node.0];
+        }) = self.nodes.get(node.0)
+        else {
+            return DrawNodeResponse {
+                node_moved: None,
+                node_to_top: None,
+                drag_released: false,
+                pin_hovered: None,
+            };
+        };
 
         let mut response = DrawNodeResponse {
             node_to_top: None,
